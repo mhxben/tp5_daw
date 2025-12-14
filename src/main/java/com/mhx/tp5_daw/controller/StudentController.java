@@ -3,54 +3,66 @@ package com.mhx.tp5_daw.controller;
 import com.mhx.tp5_daw.model.Student;
 import com.mhx.tp5_daw.service.StudentServices;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
-@RequestMapping("/students")
+@RestController
+@RequestMapping("/api/students")
 public class StudentController {
+
     @Autowired
     private StudentServices studentService;
 
+    // GET all students
     @GetMapping
-    public String listStudents(Model model) {
-        List<Student> students = studentService.getAllStudents();
-        model.addAttribute("students", students);
-        return "student-list";
+    public ResponseEntity<List<Student>> getAllStudents() {
+        return ResponseEntity.ok(studentService.getAllStudents());
     }
 
-    // Get a student by ID
-    @GetMapping("/add")
-    public String showAddForm(
-            Model model
-    ) {
-        model.addAttribute("student", new Student());
-        return "student-form";
-    }
-
-    // Create a new student
-    @PostMapping("/save")
-    public String saveStudent(@ModelAttribute Student student) {
-        studentService.saveStudent(student);
-        return "redirect:/students";
-    }
-
-    // Update an existing student
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    // GET student by id
+    @GetMapping("/{id}")
+    public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
         Student student = studentService.getStudentById(id);
-        model.addAttribute("student",student);
-        return "student-form";
+        if (student == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(student);
     }
 
+    // POST create student
+    @PostMapping
+    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
+        Student savedStudent = studentService.saveStudent(student);
+        return ResponseEntity.ok(savedStudent);
+    }
 
-    // Delete a student
-    @GetMapping("/delete/{id}")
-    public String deleteStudent(@PathVariable Long id) {
+    // PUT update student
+    @PutMapping("/{id}")
+    public ResponseEntity<Student> updateStudent(
+            @PathVariable Long id,
+            @RequestBody Student student
+    ) {
+        Student existingStudent = studentService.getStudentById(id);
+        if (existingStudent == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        student.setId(id);
+        Student updatedStudent = studentService.saveStudent(student);
+        return ResponseEntity.ok(updatedStudent);
+    }
+
+    // DELETE student
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long id) {
+        Student existingStudent = studentService.getStudentById(id);
+        if (existingStudent == null) {
+            return ResponseEntity.notFound().build();
+        }
+
         studentService.deleteStudent(id);
-        return "redirect:/students" ;
+        return ResponseEntity.noContent().build();
     }
 }
