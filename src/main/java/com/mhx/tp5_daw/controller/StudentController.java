@@ -9,42 +9,48 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
+@Controller
 @RequestMapping("/students")
 public class StudentController {
     @Autowired
     private StudentServices studentService;
 
     @GetMapping
-    public List<Student> getAllStudents() {
-        return studentService.getAllStudents();
+    public String listStudents(Model model) {
+        List<Student> students = studentService.getAllStudents();
+        model.addAttribute("students", students);
+        return "student-list";
     }
 
     // Get a student by ID
-    @GetMapping("/{id}")
-    public Student getStudentById(@PathVariable Long id) {
-        return studentService.getStudentById(id);
+    @GetMapping("/add")
+    public String showAddForm(
+            Model model
+    ) {
+        model.addAttribute("student", new Student());
+        return "student-form";
     }
 
     // Create a new student
-    @PostMapping
-    public Student createStudent(@RequestBody Student student) {
+    @PostMapping("/save")
+    public String saveStudent(@ModelAttribute Student student) {
         studentService.saveStudent(student);
-        return student;
+        return "redirect:/students";
     }
 
     // Update an existing student
-    @PutMapping("/{id}")
-    public Student updateStudent(@PathVariable Long id, @RequestBody Student student) {
-        student.setId(id);
-        studentService.saveStudent(student);
-        return student;
+    @GetMapping("/edit/{id}")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        Student student = studentService.getStudentById(id);
+        model.addAttribute("student",student);
+        return "student-form";
     }
 
+
     // Delete a student
-    @DeleteMapping("/{id}")
+    @GetMapping("/delete/{id}")
     public String deleteStudent(@PathVariable Long id) {
         studentService.deleteStudent(id);
-        return "Deleted student with id " + id;
+        return "redirect:/students" ;
     }
 }
